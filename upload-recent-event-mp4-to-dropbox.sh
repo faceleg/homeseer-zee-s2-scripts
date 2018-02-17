@@ -1,7 +1,6 @@
 #!/bin/bash
 
-echo $1 
-echo $2
+START_TIME=$SECONDS
 
 PUSHOVER_USER_KEY=$1
 PUSHOVER_APP_TOKEN=$2
@@ -27,7 +26,7 @@ EVENT_MP4_PATH="${EVENT_DIR}/${EVENT_NAME}"
 WAIT_COUNT=0
 while [ ! -f "${EVENT_MP4_PATH}" ]
 do
-  if [ $WAIT_COUNT = "30" ]; then
+  if [ $WAIT_COUNT = "60" ]; then
     echo "Timeout waiting for ${EVENT_MP4_PATH}, giving up" &>> $LOG
     exit 1
   fi
@@ -38,17 +37,21 @@ do
 done
 
 /home/homeseer/scripts/dropbox_uploader.sh upload "${EVENT_MP4_PATH}" "/last_snapshot.mp4" &>> $LOG
+echo "" &>> $LOG
 /home/homeseer/scripts/dropbox_uploader.sh upload "${EVENT_MP4_PATH}" "${EVENT_NAME}" &>> $LOG
+
+ELAPSED_TIME=$(($SECONDS - $START_TIME))
 
 curl -s \
   --form-string "token=${PUSHOVER_APP_TOKEN}" \
   --form-string "user=${PUSHOVER_USER_KEY}" \
   --form-string "html=1" \
   --form-string "title=Video available for ${EVENT_NAME}" \
-  --form-string "message=''" \
+  --form-string "message=Video was generated in ${ELAPSED_TIME} seconds" \
   --form-string "url=https://www.dropbox.com/home/Apps/FacelegHomeseer?preview=${EVENT_NAME}" \
   --form-string "url_title=View ${EVENT_NAME} on Dropbox" \
   https://api.pushover.net/1/messages.json &>> $LOG
 
+echo "" &>> $LOG
 echo "Notification for ${EVENT_NAME} sent" &>> $LOG
 
