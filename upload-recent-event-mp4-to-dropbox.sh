@@ -39,6 +39,10 @@ done
 /home/homeseer/scripts/dropbox_uploader.sh upload "${EVENT_MP4_PATH}" "/last_snapshot.mp4" &>> $LOG
 echo "" &>> $LOG
 /home/homeseer/scripts/dropbox_uploader.sh upload "${EVENT_MP4_PATH}" "${EVENT_NAME}" &>> $LOG
+DROPBOX_SHARE_LINK=`/home/homeseer/scripts/dropbox_uploader.sh share "${EVENT_NAME}"` &>> $LOG
+DROPBOX_SHARE_LINK="${DROPBOX_SHARE_LINK/> Share link: /}"
+
+echo $DROPBOX_SHARE_LINK &>> $LOG
 
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
 
@@ -47,8 +51,8 @@ curl -s \
   --form-string "user=${PUSHOVER_USER_KEY}" \
   --form-string "html=1" \
   --form-string "title=Video available for ${EVENT_NAME}" \
-  --form-string "message=Video was generated in ${ELAPSED_TIME} seconds" \
-  --form-string "url=https://www.dropbox.com/home/Apps/FacelegHomeseer?preview=${EVENT_NAME}" \
+  --form-string "message=Video was generated in ${ELAPSED_TIME} seconds: <a href='${DROPBOX_SHARE_LINK}'>watch video</a>" \
+  --form-string "url=$DROPBOX_SHARE_LINK" \
   --form-string "url_title=View ${EVENT_NAME} on Dropbox" \
   https://api.pushover.net/1/messages.json &>> $LOG
 
